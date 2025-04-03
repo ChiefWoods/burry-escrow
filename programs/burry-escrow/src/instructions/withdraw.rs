@@ -1,69 +1,59 @@
-use crate::constants::*;
-use crate::errors::*;
-use crate::state::*;
-use anchor_lang::prelude::*;
-use anchor_lang::solana_program::clock::Clock;
-use std::str::FromStr;
-use switchboard_solana::AggregatorAccountData;
+use anchor_lang::{
+    prelude::*,
+    system_program::{transfer, Transfer},
+};
+use switchboard_on_demand::{prelude::rust_decimal::{prelude::FromPrimitive, Decimal}, PullFeedAccountData};
 
-pub fn withdraw_handler(ctx: Context<Withdraw>) -> Result<()> {
-    let feed = &ctx.accounts.feed_aggregator.load()?;
-    let escrow = &ctx.accounts.escrow_account;
-
-    let current_sol_price: f64 = feed.get_result()?.try_into()?;
-
-    // Check if the feed has been updated in the last 5 minutes (300 seconds)
-    feed.check_staleness(Clock::get().unwrap().unix_timestamp, 300)
-        .map_err(|_| error!(EscrowErrorCode::StaleFeed))?;
-
-    msg!("Current SOL price is {}", current_sol_price);
-    msg!("Unlock price is {}", escrow.unlock_price);
-
-    if current_sol_price < escrow.unlock_price {
-        return Err(EscrowErrorCode::SolPriceBelowUnlockPrice.into());
-    }
-
-    let escrow_lamports = escrow.escrow_amount;
-
-    // Transfer lamports from escrow to user
-    **escrow.to_account_info().try_borrow_mut_lamports()? = escrow
-        .to_account_info()
-        .lamports()
-        .checked_sub(escrow_lamports)
-        .ok_or(ProgramError::InsufficientFunds)?;
-
-    **ctx
-        .accounts
-        .user
-        .to_account_info()
-        .try_borrow_mut_lamports()? = ctx
-        .accounts
-        .user
-        .to_account_info()
-        .lamports()
-        .checked_add(escrow_lamports)
-        .ok_or(ProgramError::InvalidArgument)?;
-
-    Ok(())
-}
+use crate::{
+    constants::{ESCROW_SEED, SOL_USDC_FEED},
+    errors::BurryError,
+    state::Escrow,
+};
 
 #[derive(Accounts)]
 pub struct Withdraw<'info> {
     #[account(mut)]
     pub user: Signer<'info>,
-
     #[account(
         mut,
+        close = user,
         seeds = [ESCROW_SEED, user.key().as_ref()],
-        bump,
-        close = user
+        bump = escrow.bump,
     )]
-    pub escrow_account: Account<'info, Escrow>,
-
-    #[account(
-        address = Pubkey::from_str(SOL_USDC_FEED).unwrap()
-    )]
-    pub feed_aggregator: AccountLoader<'info, AggregatorAccountData>,
-
+    pub escrow: Account<'info, Escrow>,
+    /// CHECK: PullFeedAccountData
+    #[account(address = SOL_USDC_FEED @ BurryError::InvalidSwitchboardAccount)]
+    pub pull_feed: AccountInfo<'info>,
     pub system_program: Program<'info, System>,
+}
+
+impl Withdraw<'_> {
+    pub fn handler(ctx: Context<Withdraw>) -> Result<()> {
+        let pull_feed_data = ctx.accounts.pull_feed.data.borrow();
+        let pull_feed = PullFeedAccountData::parse(pull_feed_data).unwrap();
+
+        let escrow = &ctx.accounts.escrow;
+        let current_sol_price= pull_feed.value(&Clock::get()?).unwrap();
+
+        msg!("Current SOL price: {}", current_sol_price);
+        msg!("Escrow unlock price: {}", escrow.unlock_price);
+
+        require_gte!(
+            current_sol_price,
+            // escrow.unlock_price,
+            Decimal::from_f64(escrow.unlock_price).unwrap(),
+            BurryError::SolPriceBelowUnlockPrice
+        );
+
+        transfer(
+            CpiContext::new(
+                ctx.accounts.system_program.to_account_info(),
+                Transfer {
+                    from: ctx.accounts.escrow.to_account_info(),
+                    to: ctx.accounts.user.to_account_info(),
+                },
+            ),
+            escrow.escrow_amount,
+        )
+    }
 }

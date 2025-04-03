@@ -12,11 +12,11 @@ declare_id!("DDFpiq1hQUmXPr6RvnYw4srpRjeDzGjkVNBZdr4oNfSw");
 pub mod burry_escrow {
     use super::*;
 
-    pub fn deposit(ctx: Context<Deposit>, escrow_amount: u64, unlock_price: f64) -> Result<()> {
-        deposit_handler(ctx, escrow_amount, unlock_price)
+    pub fn deposit(ctx: Context<Deposit>, args: DepositArgs) -> Result<()> {
+        Deposit::handler(ctx, args)
     }
 
     pub fn withdraw(ctx: Context<Withdraw>) -> Result<()> {
-        withdraw_handler(ctx)
+        Withdraw::handler(ctx)
     }
 }
