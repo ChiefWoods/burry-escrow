@@ -19,4 +19,12 @@ pub mod burry_escrow {
     pub fn withdraw(ctx: Context<Withdraw>) -> Result<()> {
         Withdraw::handler(ctx)
     }
+
+    pub fn commit_randomness(ctx: Context<CommitRandomness>) -> Result<()> {
+        CommitRandomness::handler(ctx)
+    }
+
+    pub fn reveal_randomness(ctx: Context<RevealRandomness>) -> Result<()> {
+        RevealRandomness::handler(ctx)
+    }
 }

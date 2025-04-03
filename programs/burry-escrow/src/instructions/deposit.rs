@@ -38,6 +38,9 @@ impl Deposit<'_> {
             bump: ctx.bumps.escrow,
             unlock_price,
             escrow_amount,
+            out_of_jail: false,
+            randomness: Pubkey::default(),
+            seed_slot: u64::default(),
         });
 
         transfer(

@@ -2,7 +2,10 @@ use anchor_lang::{
     prelude::*,
     system_program::{transfer, Transfer},
 };
-use switchboard_on_demand::{prelude::rust_decimal::{prelude::FromPrimitive, Decimal}, PullFeedAccountData};
+use switchboard_on_demand::{
+    prelude::rust_decimal::{prelude::FromPrimitive, Decimal},
+    PullFeedAccountData,
+};
 
 use crate::{
     constants::{ESCROW_SEED, SOL_USDC_FEED},
@@ -22,28 +25,27 @@ pub struct Withdraw<'info> {
     )]
     pub escrow: Account<'info, Escrow>,
     /// CHECK: PullFeedAccountData
-    #[account(address = SOL_USDC_FEED @ BurryError::InvalidSwitchboardAccount)]
+    #[account(address = SOL_USDC_FEED @ BurryError::InvalidPullFeed)]
     pub pull_feed: AccountInfo<'info>,
     pub system_program: Program<'info, System>,
 }
 
 impl Withdraw<'_> {
     pub fn handler(ctx: Context<Withdraw>) -> Result<()> {
-        let pull_feed_data = ctx.accounts.pull_feed.data.borrow();
-        let pull_feed = PullFeedAccountData::parse(pull_feed_data).unwrap();
-
         let escrow = &ctx.accounts.escrow;
-        let current_sol_price= pull_feed.value(&Clock::get()?).unwrap();
 
-        msg!("Current SOL price: {}", current_sol_price);
-        msg!("Escrow unlock price: {}", escrow.unlock_price);
+        if !ctx.accounts.escrow.out_of_jail {
+            let pull_feed_data = ctx.accounts.pull_feed.data.borrow();
+            let pull_feed = PullFeedAccountData::parse(pull_feed_data).unwrap();
 
-        require_gte!(
-            current_sol_price,
-            // escrow.unlock_price,
-            Decimal::from_f64(escrow.unlock_price).unwrap(),
-            BurryError::SolPriceBelowUnlockPrice
-        );
+            let current_sol_price = pull_feed.value(&Clock::get()?).unwrap();
+
+            require_gte!(
+                current_sol_price,
+                Decimal::from_f64(escrow.unlock_price).unwrap(),
+                BurryError::SolPriceBelowUnlockPrice
+            );
+        }
 
         transfer(
             CpiContext::new(
