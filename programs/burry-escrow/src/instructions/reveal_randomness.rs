@@ -5,7 +5,6 @@ use crate::{constants::ESCROW_SEED, errors::BurryError, state::Escrow};
 
 #[derive(Accounts)]
 pub struct RevealRandomness<'info> {
-    #[account(mut)]
     pub user: Signer<'info>,
     #[account(
         mut,
@@ -15,21 +14,21 @@ pub struct RevealRandomness<'info> {
     )]
     pub escrow: Account<'info, Escrow>,
     /// CHECK: RandomnessAccountData
-    pub randomness: AccountInfo<'info>,
+    pub randomness: UncheckedAccount<'info>,
 }
 
 impl RevealRandomness<'_> {
     pub fn handler(ctx: Context<RevealRandomness>) -> Result<()> {
-        let randomness_data =
+        let randomness =
             RandomnessAccountData::parse(ctx.accounts.randomness.data.borrow()).unwrap();
 
         require_eq!(
-            randomness_data.seed_slot,
+            randomness.seed_slot,
             ctx.accounts.escrow.seed_slot,
             BurryError::RandomnessExpired
         );
 
-        let value = randomness_data.get_value(&Clock::get()?).unwrap();
+        let value = randomness.get_value(&Clock::get()?).unwrap();
 
         let dice_type: u8 = 6;
         let dice_1 = value[0] % dice_type + 1;

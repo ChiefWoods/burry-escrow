@@ -5,7 +5,6 @@ use crate::{constants::ESCROW_SEED, errors::BurryError, state::Escrow};
 
 #[derive(Accounts)]
 pub struct CommitRandomness<'info> {
-    #[account(mut)]
     pub user: Signer<'info>,
     #[account(
         mut,
@@ -14,21 +13,23 @@ pub struct CommitRandomness<'info> {
     )]
     pub escrow: Account<'info, Escrow>,
     /// CHECK: RandomnessAccountData
-    pub randomness: AccountInfo<'info>,
+    pub randomness: UncheckedAccount<'info>,
 }
 
 impl CommitRandomness<'_> {
     pub fn handler(ctx: Context<CommitRandomness>) -> Result<()> {
-        let randomess_data = RandomnessAccountData::parse(ctx.accounts.randomness.data.borrow()).unwrap();
+        let randomness = RandomnessAccountData::parse(ctx.accounts.randomness.data.borrow()).unwrap();
 
         require_eq!(
-            randomess_data.seed_slot,
+            randomness.seed_slot,
             Clock::get()?.slot - 1,
             BurryError::RandomessAlreadyRevealed
         );
 
-        ctx.accounts.escrow.randomness = ctx.accounts.randomness.key();
-        ctx.accounts.escrow.seed_slot = randomess_data.seed_slot;
+        let escrow = &mut ctx.accounts.escrow;
+
+        escrow.randomness = ctx.accounts.randomness.key();
+        escrow.seed_slot = randomness.seed_slot;
 
         Ok(())
     }

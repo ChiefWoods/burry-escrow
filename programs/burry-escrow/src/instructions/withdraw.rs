@@ -1,6 +1,5 @@
 use anchor_lang::{
     prelude::*,
-    system_program::{transfer, Transfer},
 };
 use switchboard_on_demand::{
     prelude::rust_decimal::{prelude::FromPrimitive, Decimal},
@@ -8,7 +7,7 @@ use switchboard_on_demand::{
 };
 
 use crate::{
-    constants::{ESCROW_SEED, SOL_USDC_FEED},
+    constants::{ESCROW_SEED, SOL_USD_FEED},
     errors::BurryError,
     state::Escrow,
 };
@@ -25,18 +24,18 @@ pub struct Withdraw<'info> {
     )]
     pub escrow: Account<'info, Escrow>,
     /// CHECK: PullFeedAccountData
-    #[account(address = SOL_USDC_FEED @ BurryError::InvalidPullFeed)]
-    pub pull_feed: AccountInfo<'info>,
+    #[account(address = SOL_USD_FEED @ BurryError::InvalidPullFeed)]
+    pub pull_feed: UncheckedAccount<'info>,
     pub system_program: Program<'info, System>,
 }
 
 impl Withdraw<'_> {
     pub fn handler(ctx: Context<Withdraw>) -> Result<()> {
-        let escrow = &ctx.accounts.escrow;
+        let escrow = &mut ctx.accounts.escrow;
 
-        if !ctx.accounts.escrow.out_of_jail {
-            let pull_feed_data = ctx.accounts.pull_feed.data.borrow();
-            let pull_feed = PullFeedAccountData::parse(pull_feed_data).unwrap();
+        if !escrow.out_of_jail {
+            let pull_feed =
+                PullFeedAccountData::parse(ctx.accounts.pull_feed.data.borrow()).unwrap();
 
             let current_sol_price = pull_feed.value(&Clock::get()?).unwrap();
 
@@ -47,15 +46,15 @@ impl Withdraw<'_> {
             );
         }
 
-        transfer(
-            CpiContext::new(
-                ctx.accounts.system_program.to_account_info(),
-                Transfer {
-                    from: ctx.accounts.escrow.to_account_info(),
-                    to: ctx.accounts.user.to_account_info(),
-                },
-            ),
-            escrow.escrow_amount,
-        )
+        **escrow
+            .to_account_info()
+            .try_borrow_mut_lamports()? -= escrow.escrow_amount;
+        **ctx
+            .accounts
+            .user
+            .to_account_info()
+            .try_borrow_mut_lamports()? += escrow.escrow_amount;
+
+        Ok(())
     }
 }

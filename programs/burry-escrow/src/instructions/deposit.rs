@@ -1,7 +1,6 @@
 use anchor_lang::{
     prelude::*,
     system_program::{transfer, Transfer},
-    Discriminator,
 };
 
 use crate::{constants::ESCROW_SEED, state::Escrow};

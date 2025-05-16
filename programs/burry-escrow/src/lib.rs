@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use instructions::{deposit::*, withdraw::*};
+use instructions::*;
 
 pub mod errors;
 pub mod instructions;
