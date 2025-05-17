@@ -2,7 +2,8 @@
   "license": "ISC",
   "scripts": {
     "lint:fix": "prettier */*.js \"*/**/*{.js,.ts}\" -w",
-    "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check"
+    "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check",
+    "prepare": "husky"
   },
   "dependencies": {
     "@coral-xyz/anchor": "0.31.1"
@@ -12,6 +13,8 @@
     "@switchboard-xyz/on-demand": "^2.8.1",
     "@types/bn.js": "^5.1.6",
     "@types/bun": "^1.2.13",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.0.0",
     "prettier": "^3.5.3",
     "typescript": "^5.8.3"
   }
