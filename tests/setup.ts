@@ -12,15 +12,15 @@ const provider = new AnchorProvider(connection, new Wallet(FUNDED_KEYPAIR));
 const program = new Program<BurryEscrow>(idl, provider);
 const onDemandProgram = new Program<SbOnDemand>(onDemandIdl, provider);
 
-export async function getSetup() {
+export function getSetup() {
   return { program, onDemandProgram };
 }
 
-export async function fundKeypair(pubkey: PublicKey, lamports: number = LAMPORTS_PER_SOL) {
+export async function fundKeypair(pubkey: PublicKey, lamports: number = LAMPORTS_PER_SOL / 10) {
   const ix = SystemProgram.transfer({
     fromPubkey: FUNDED_KEYPAIR.publicKey,
     toPubkey: pubkey,
-    lamports: LAMPORTS_PER_SOL / 10,
+    lamports,
   })
   const tx = new Transaction().add(ix);
   tx.feePayer = FUNDED_KEYPAIR.publicKey;

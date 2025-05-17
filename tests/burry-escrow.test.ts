@@ -9,7 +9,7 @@ import { ON_DEMAND_DEVNET_QUEUE, PullFeed, Randomness } from "@switchboard-xyz/o
 import { BASE_FEE, SOL_USD_FEED } from "./constants";
 import { SbOnDemand } from "./fixtures/sb_on_demand";
 
-describe('burry_escrow', () => {
+describe('burry-escrow', () => {
   let { program, onDemandProgram } = {} as {
     program: Program<BurryEscrow>;
     onDemandProgram: Program<SbOnDemand>;
