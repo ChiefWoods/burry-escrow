@@ -18,7 +18,8 @@ pub struct CommitRandomness<'info> {
 
 impl CommitRandomness<'_> {
     pub fn handler(ctx: Context<CommitRandomness>) -> Result<()> {
-        let randomness = RandomnessAccountData::parse(ctx.accounts.randomness.data.borrow()).unwrap();
+        let randomness =
+            RandomnessAccountData::parse(ctx.accounts.randomness.data.borrow()).unwrap();
 
         require_eq!(
             randomness.seed_slot,

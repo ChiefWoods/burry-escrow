@@ -1,6 +1,4 @@
-use anchor_lang::{
-    prelude::*,
-};
+use anchor_lang::prelude::*;
 use switchboard_on_demand::{
     prelude::rust_decimal::{prelude::FromPrimitive, Decimal},
     PullFeedAccountData,
@@ -46,9 +44,7 @@ impl Withdraw<'_> {
             );
         }
 
-        **escrow
-            .to_account_info()
-            .try_borrow_mut_lamports()? -= escrow.escrow_amount;
+        **escrow.to_account_info().try_borrow_mut_lamports()? -= escrow.escrow_amount;
         **ctx
             .accounts
             .user
