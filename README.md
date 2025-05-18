@@ -64,20 +64,6 @@ anchor keys sync
 anchor build
 ```
 
-#### Testing
-
-1. Set up `.env` values. Use a wallet that's funded in devnet with at least 1 SOL. This wallet is used to fund keypairs when running a new test suite.
-
-```bash
-cp .env.example .env
-```
-
-2. Run all `.test.ts` files under `/tests`. A max buffer of 2 mins is allowed for the tests to run due to the asynchronous state of devnet testing.
-
-```bash
-bun run test
-```
-
 #### Deployment
 
 1. Deploy the program
@@ -90,6 +76,20 @@ anchor deploy --provider.cluster d
 
 ```bash
 anchor idl init -f target/idl/burry_escrow.json <PROGRAM_ID> --provider.cluster d
+```
+
+#### Testing
+
+1. Set up `.env` values. Use a wallet that's funded in devnet with at least 1 SOL. This wallet is used to fund keypairs when running a new test suite.
+
+```bash
+cp .env.example .env
+```
+
+2. Run all `.test.ts` files under `/tests`. A max buffer of 2 mins is allowed for the tests to run due to the asynchronous state of devnet testing.
+
+```bash
+bun run test
 ```
 
 ## Issues
