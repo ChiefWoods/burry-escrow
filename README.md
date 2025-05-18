@@ -75,7 +75,7 @@ cp .env.example .env
 2. Run all `.test.ts` files under `/tests`. A max buffer of 2 mins is allowed for the tests to run due to the asynchronous state of devnet testing.
 
 ```bash
-bun test --timeout 120000
+bun run test
 ```
 
 #### Deployment
