@@ -11,12 +11,12 @@
   },
   "devDependencies": {
     "@solana/web3.js": "^1.98.2",
-    "@switchboard-xyz/on-demand": "^2.8.1",
-    "@types/bn.js": "^5.1.6",
-    "@types/bun": "^1.2.13",
+    "@switchboard-xyz/on-demand": "^2.11.2",
+    "@types/bn.js": "^5.2.0",
+    "@types/bun": "^1.2.18",
     "husky": "^9.1.7",
-    "lint-staged": "^16.0.0",
-    "prettier": "^3.5.3",
+    "lint-staged": "^16.1.2",
+    "prettier": "^3.6.2",
     "typescript": "^5.8.3"
   }
 }
