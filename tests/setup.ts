@@ -3,6 +3,7 @@ import { BurryEscrow } from "../target/types/burry_escrow";
 import {
   clusterApiUrl,
   Connection,
+  Keypair,
   LAMPORTS_PER_SOL,
   PublicKey,
   SystemProgram,
@@ -11,7 +12,7 @@ import {
 import idl from "../target/idl/burry_escrow.json";
 import onDemandIdl from "./fixtures/sb_on_demand.json";
 import { PullFeed } from "@switchboard-xyz/on-demand";
-import { FUNDED_KEYPAIR, PULL_FEED_PRECISION } from "./constants";
+import { BASE_FEE, FUNDED_KEYPAIR, PULL_FEED_PRECISION } from "./constants";
 import { SbOnDemand } from "./fixtures/sb_on_demand";
 
 const connection = new Connection(clusterApiUrl("devnet"), "confirmed");
@@ -35,6 +36,20 @@ export async function fundKeypair(
   const tx = new Transaction().add(ix);
   tx.feePayer = FUNDED_KEYPAIR.publicKey;
   const signature = await connection.sendTransaction(tx, [FUNDED_KEYPAIR]);
+  await connection.confirmTransaction(signature);
+}
+
+export async function defundKeypair(keypair: Keypair) {
+  const remainingBal = await connection.getBalance(keypair.publicKey);
+
+  const ix = SystemProgram.transfer({
+    fromPubkey: keypair.publicKey,
+    toPubkey: FUNDED_KEYPAIR.publicKey,
+    lamports: remainingBal - BASE_FEE,
+  });
+  const tx = new Transaction().add(ix);
+  tx.feePayer = keypair.publicKey;
+  const signature = await connection.sendTransaction(tx, [keypair]);
   await connection.confirmTransaction(signature);
 }
 

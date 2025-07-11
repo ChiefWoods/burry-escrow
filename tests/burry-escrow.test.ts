@@ -1,7 +1,12 @@
-import { beforeAll, describe, expect, test } from "bun:test";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { BN, Program } from "@coral-xyz/anchor";
 import { BurryEscrow } from "../target/types/burry_escrow";
-import { fetchPullFeedValue, fundKeypair, getSetup } from "./setup";
+import {
+  defundKeypair,
+  fetchPullFeedValue,
+  fundKeypair,
+  getSetup,
+} from "./setup";
 import {
   Connection,
   Keypair,
@@ -392,5 +397,9 @@ describe("burry-escrow", () => {
       blockhash,
       lastValidBlockHeight,
     });
+  });
+
+  afterAll(async () => {
+    await defundKeypair(authority);
   });
 });
